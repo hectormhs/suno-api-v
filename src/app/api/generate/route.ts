@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import { cookies } from 'next/headers'
+import { cookies } from 'next/headers';
 import { DEFAULT_MODEL, sunoApi } from "@/lib/SunoApi";
 import { corsHeaders } from "@/lib/utils";
 
@@ -25,10 +25,15 @@ export async function POST(req: NextRequest) {
           ...corsHeaders
         }
       });
+
     } catch (error: any) {
-      console.error('Error generating custom audio:', JSON.stringify(error.response.data));
-      if (error.response.status === 402) {
-        return new NextResponse(JSON.stringify({ error: error.response.data.detail }), {
+      console.error('Error generating custom audio:', error);
+
+      const errorData = error?.response?.data || { detail: 'Unknown error' };
+      const statusCode = error?.response?.status || 500;
+
+      if (statusCode === 402) {
+        return new NextResponse(JSON.stringify({ error: errorData.detail }), {
           status: 402,
           headers: {
             'Content-Type': 'application/json',
@@ -36,7 +41,8 @@ export async function POST(req: NextRequest) {
           }
         });
       }
-      return new NextResponse(JSON.stringify({ error: 'Internal server error: ' + JSON.stringify(error.response.data.detail) }), {
+
+      return new NextResponse(JSON.stringify({ error: 'Internal server error: ' + errorData.detail }), {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
@@ -44,6 +50,7 @@ export async function POST(req: NextRequest) {
         }
       });
     }
+
   } else {
     return new NextResponse('Method Not Allowed', {
       headers: {
@@ -54,7 +61,6 @@ export async function POST(req: NextRequest) {
     });
   }
 }
-
 
 export async function OPTIONS(request: Request) {
   return new Response(null, {
